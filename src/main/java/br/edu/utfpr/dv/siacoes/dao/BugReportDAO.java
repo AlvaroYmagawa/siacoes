@@ -14,7 +14,24 @@ import br.edu.utfpr.dv.siacoes.model.BugReport.BugStatus;
 import br.edu.utfpr.dv.siacoes.model.Module;
 import br.edu.utfpr.dv.siacoes.model.User;
 
+// Funções de conexão ao banco possuem nomes bem sugestivos, e realizam exatamente
+// o que o nome sugere, seguem um mesmo padrão, facilitando o entendimento,
+// Sempre instanciando as variavéis para conexão com banco
+// em seguida dentro de um try realiza a query com o banco e a manipulação para o 
+// retorno dos dados, e por fim fecha a conexão com o bancho
 public class BugReportDAO {
+	// Criação de função para fechar a conexão com o banco, essa função foi criada
+	// devido a esse processo se repetir diversas vezes nessa classe
+	private void closeConnection(ResultSet rs, Statement stmt, Connection conn){
+		if((rs != null) && !rs.isClosed())
+		rs.close();
+		if((stmt != null) && !stmt.isClosed())
+		stmt.close();
+		if((conn != null) && !conn.isClosed())
+		conn.close();
+	}
+
+	
 	
 	public BugReport findById(int id) throws SQLException{
 		Connection conn = null;
@@ -37,12 +54,7 @@ public class BugReportDAO {
 				return null;
 			}
 		}finally{
-			if((rs != null) && !rs.isClosed())
-				rs.close();
-			if((stmt != null) && !stmt.isClosed())
-				stmt.close();
-			if((conn != null) && !conn.isClosed())
-				conn.close();
+			closeConnection(rs, stmt, conn);
 		}
 	}
 	
@@ -66,12 +78,7 @@ public class BugReportDAO {
 			
 			return list;
 		}finally{
-			if((rs != null) && !rs.isClosed())
-				rs.close();
-			if((stmt != null) && !stmt.isClosed())
-				stmt.close();
-			if((conn != null) && !conn.isClosed())
-				conn.close();
+			closeConnection(rs, stmt, conn);
 		}
 	}
 	
@@ -120,12 +127,7 @@ public class BugReportDAO {
 			
 			return bug.getIdBugReport();
 		}finally{
-			if((rs != null) && !rs.isClosed())
-				rs.close();
-			if((stmt != null) && !stmt.isClosed())
-				stmt.close();
-			if((conn != null) && !conn.isClosed())
-				conn.close();
+			closeConnection(rs, stmt, conn);
 		}
 	}
 	
