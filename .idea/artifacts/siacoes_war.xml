@@ -1,0 +1,14 @@
+<component name="ArtifactManager">
+  <artifact type="war" name="siacoes:war">
+    <output-path>$PROJECT_DIR$/target</output-path>
+    <properties id="maven-jee-properties">
+      <options>
+        <module>siacoes</module>
+        <packaging>war</packaging>
+      </options>
+    </properties>
+    <root id="archive" name="siacoes.war">
+      <element id="artifact" artifact-name="siacoes:war exploded" />
+    </root>
+  </artifact>
+</component>
