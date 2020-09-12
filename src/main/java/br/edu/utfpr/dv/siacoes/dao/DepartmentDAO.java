@@ -12,8 +12,13 @@ import java.util.List;
 import br.edu.utfpr.dv.siacoes.log.UpdateEvent;
 import br.edu.utfpr.dv.siacoes.model.Department;
 
-public class DepartmentDAO {
+public class DepartmentDAO extends Template{
+	@Override
+	void functions(){
+		super.functions();
+	}
 
+	@Override
 	public Department findById(int id) throws SQLException{
 		Connection conn = null;
 		PreparedStatement stmt = null;
@@ -45,6 +50,7 @@ public class DepartmentDAO {
 		}
 	}
 
+	@Override
 	public List<Department> listAll(boolean onlyActive) throws SQLException{
 		Connection conn = null;
 		Statement stmt = null;
@@ -161,7 +167,8 @@ public class DepartmentDAO {
 		}
 	}
 
-	private Department loadObject(ResultSet rs) throws SQLException{
+	@Override
+	public Department loadObject(ResultSet rs) throws SQLException{
 		Department department = new Department();
 
 		department.setIdDepartment(rs.getInt("idDepartment"));
@@ -176,5 +183,6 @@ public class DepartmentDAO {
 
 		return department;
 	}
+
 
 }

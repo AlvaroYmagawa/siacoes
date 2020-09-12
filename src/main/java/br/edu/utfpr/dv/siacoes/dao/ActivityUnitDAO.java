@@ -16,7 +16,12 @@ import br.edu.utfpr.dv.siacoes.model.ActivityUnit;
 // Sempre instanciando as variavéis para conexão com banco
 // em seguida dentro de um try realiza a query com o banco e a manipulação para o 
 // retorno dos dados, e por fim fecha a conexão com o bancho
-public class ActivityUnitDAO {
+public class ActivityUnitDAO extends Template {
+	@Override
+	void functions(){
+		super.functions();
+	}
+
 	// Criação de função para fechar a conexão com o banco, essa função foi criada
 	// devido a esse processo se repetir diversas vezes nessa classe
 	private void closeConnection(ResultSet rs, Statement stmt, Connection conn){
@@ -28,29 +33,6 @@ public class ActivityUnitDAO {
 		conn.close();
 	}
 
-	public List<ActivityUnit> listAll() throws SQLException{
-		Connection conn = null;
-		Statement stmt = null;
-		ResultSet rs = null;
-		
-		try{
-			conn = ConnectionDAO.getInstance().getConnection();
-			stmt = conn.createStatement();
-
-			rs = stmt.executeQuery("SELECT * FROM activityunit ORDER BY description");
-			
-			List<ActivityUnit> list = new ArrayList<ActivityUnit>();
-			
-			while(rs.next()){
-				list.add(this.loadObject(rs));
-			}
-			
-			return list;
-		}finally{
-			closeConnection(rs, stmt, conn);
-		}
-	}
-	 
 	public ActivityUnit findById(int id) throws SQLException{
 		Connection conn = null;
 		PreparedStatement stmt = null;
@@ -73,50 +55,85 @@ public class ActivityUnitDAO {
 			closeConnection(rs, stmt, conn);
 		}
 	}
-	
-	public int save(int idUser, ActivityUnit unit) throws SQLException{
+
+	@Override
+	public void listAll(boolean onlyActive) {
+		Connection conn = null;
+		Statement stmt = null;
+		ResultSet rs = null;
+
+		try{
+			conn = ConnectionDAO.getInstance().getConnection();
+			stmt = conn.createStatement();
+
+			rs = stmt.executeQuery("SELECT * FROM activityunit ORDER BY description");
+
+			List<ActivityUnit> list = new ArrayList<ActivityUnit>();
+
+			while(rs.next()){
+				list.add(this.loadObject(rs));
+			}
+
+			return list;
+		}finally{
+			closeConnection(rs, stmt, conn);
+		}
+	}
+
+	@Override
+	public void closeConection(Connection conn, PreparedStatement stmt, ResultSet rs) {
+		if((rs != null) && !rs.isClosed())
+			rs.close();
+		if((stmt != null) && !stmt.isClosed())
+			stmt.close();
+		if((conn != null) && !conn.isClosed())
+			conn.close();
+	}
+
+	@Override
+	public void save(int idUser, Department department) {
 		boolean insert = (unit.getIdActivityUnit() == 0);
 		Connection conn = null;
 		PreparedStatement stmt = null;
 		ResultSet rs = null;
-		
+
 		try{
 			conn = ConnectionDAO.getInstance().getConnection();
-			
+
 			if(insert){
 				stmt = conn.prepareStatement("INSERT INTO activityunit(description, fillAmount, amountDescription) VALUES(?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
 			}else{
 				stmt = conn.prepareStatement("UPDATE activityunit SET description=?, fillAmount=?, amountDescription=? WHERE idActivityUnit=?");
 			}
-			
+
 			stmt.setString(1, unit.getDescription());
 			stmt.setInt(2, (unit.isFillAmount() ? 1 : 0));
 			stmt.setString(3, unit.getAmountDescription());
-			
+
 			if(!insert){
 				stmt.setInt(4, unit.getIdActivityUnit());
 			}
-			
+
 			stmt.execute();
-			
+
 			if(insert){
 				rs = stmt.getGeneratedKeys();
-				
+
 				if(rs.next()){
 					unit.setIdActivityUnit(rs.getInt(1));
 				}
-				
+
 				new UpdateEvent(conn).registerInsert(idUser, unit);
 			} else {
 				new UpdateEvent(conn).registerUpdate(idUser, unit);
 			}
-			
+
 			return unit.getIdActivityUnit();
 		}finally{
 			closeConnection(rs, stmt, conn);
 		}
 	}
-	
+
 	private ActivityUnit loadObject(ResultSet rs) throws SQLException{
 		ActivityUnit unit = new ActivityUnit();
 		

@@ -19,20 +19,14 @@ import br.edu.utfpr.dv.siacoes.model.User;
 // Sempre instanciando as variavéis para conexão com banco
 // em seguida dentro de um try realiza a query com o banco e a manipulação para o 
 // retorno dos dados, e por fim fecha a conexão com o bancho
-public class BugReportDAO {
-	// Criação de função para fechar a conexão com o banco, essa função foi criada
-	// devido a esse processo se repetir diversas vezes nessa classe
-	private void closeConnection(ResultSet rs, Statement stmt, Connection conn){
-		if((rs != null) && !rs.isClosed())
-		rs.close();
-		if((stmt != null) && !stmt.isClosed())
-		stmt.close();
-		if((conn != null) && !conn.isClosed())
-		conn.close();
+public class BugReportDAO extends Template {
+	@Override
+	void functions(){
+		super.functions();
 	}
 
-	
-	
+	// Criação de função para fechar a conexão com o banco, essa função foi criada
+	// devido a esse processo se repetir diversas vezes nessa classe
 	public BugReport findById(int id) throws SQLException{
 		Connection conn = null;
 		PreparedStatement stmt = null;
@@ -57,46 +51,58 @@ public class BugReportDAO {
 			closeConnection(rs, stmt, conn);
 		}
 	}
-	
-	public List<BugReport> listAll() throws SQLException{
+
+	@Override
+	public void listAll(boolean onlyActive) {
 		Connection conn = null;
 		Statement stmt = null;
 		ResultSet rs = null;
-		
+
 		try{
 			conn = ConnectionDAO.getInstance().getConnection();
 			stmt = conn.createStatement();
-			
+
 			rs = stmt.executeQuery("SELECT bugreport.*, \"user\".name " +
 					"FROM bugreport INNER JOIN \"user\" ON \"user\".idUser=bugreport.idUser " +
 					"ORDER BY status, reportdate");
 			List<BugReport> list = new ArrayList<BugReport>();
-			
+
 			while(rs.next()){
 				list.add(this.loadObject(rs));
 			}
-			
+
 			return list;
 		}finally{
 			closeConnection(rs, stmt, conn);
 		}
 	}
-	
-	public int save(BugReport bug) throws SQLException{
+
+	@Override
+	public void closeConection(Connection conn, PreparedStatement stmt, ResultSet rs) {
+		if((rs != null) && !rs.isClosed())
+			rs.close();
+		if((stmt != null) && !stmt.isClosed())
+			stmt.close();
+		if((conn != null) && !conn.isClosed())
+			conn.close();
+	}
+
+	@Override
+	public void save(int idUser, Department department) {
 		boolean insert = (bug.getIdBugReport() == 0);
 		Connection conn = null;
 		PreparedStatement stmt = null;
 		ResultSet rs = null;
-		
+
 		try{
 			conn = ConnectionDAO.getInstance().getConnection();
-			
+
 			if(insert){
 				stmt = conn.prepareStatement("INSERT INTO bugreport(idUser, module, title, description, reportDate, type, status, statusDate, statusDescription) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
 			}else{
 				stmt = conn.prepareStatement("UPDATE bugreport SET idUser=?, module=?, title=?, description=?, reportDate=?, type=?, status=?, statusDate=?, statusDescription=? WHERE idBugReport=?");
 			}
-			
+
 			stmt.setInt(1, bug.getUser().getIdUser());
 			stmt.setInt(2, bug.getModule().getValue());
 			stmt.setString(3, bug.getTitle());
@@ -110,27 +116,29 @@ public class BugReportDAO {
 				stmt.setDate(8, new java.sql.Date(bug.getStatusDate().getTime()));
 			}
 			stmt.setString(9, bug.getStatusDescription());
-			
+
 			if(!insert){
 				stmt.setInt(10, bug.getIdBugReport());
 			}
-			
+
 			stmt.execute();
-			
+
 			if(insert){
 				rs = stmt.getGeneratedKeys();
-				
+
 				if(rs.next()){
 					bug.setIdBugReport(rs.getInt(1));
 				}
 			}
-			
+
 			return bug.getIdBugReport();
 		}finally{
 			closeConnection(rs, stmt, conn);
 		}
 	}
-	
+
+
+
 	private BugReport loadObject(ResultSet rs) throws SQLException{
 		BugReport bug = new BugReport();
 		
